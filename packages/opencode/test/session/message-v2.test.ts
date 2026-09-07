@@ -876,7 +876,14 @@ describe("session.message-v2.toModelMessage", () => {
         },
       },
     )
-    const oversized = Buffer.alloc(6_000_000, 0x42).toString("base64")
+    const oversizedBytes = Buffer.alloc(6_000_000, 0x42)
+    oversizedBytes.write("RIFF", 0, "ascii")
+    oversizedBytes.writeUInt32LE(5_999_992, 4)
+    oversizedBytes.write("WEBP", 8, "ascii")
+    oversizedBytes.write("VP8X", 12, "ascii")
+    oversizedBytes.writeUIntLE(99, 24, 3)
+    oversizedBytes.writeUIntLE(99, 27, 3)
+    const oversized = oversizedBytes.toString("base64")
     const userID = "m-user-oversized-error"
     const assistantID = "m-assistant-oversized-error"
     const input: MessageV2.WithParts[] = [
