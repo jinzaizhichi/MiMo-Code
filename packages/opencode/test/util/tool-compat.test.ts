@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import type { JSONSchema7 } from "@ai-sdk/provider"
 import {
   canonical,
@@ -44,6 +44,58 @@ describe("util.tool-compat", () => {
 
       expect(resolveName("mcp__feishu-mcp-pro__doc_read", mcpTools)).toBe("feishu-mcp-pro_doc_read")
       expect(resolveName("mcp__feishu_mcp_pro__doc_read", mcpTools)).toBe("feishu-mcp-pro_doc_read")
+    })
+
+    test("prefers an exact match over an earlier case-insensitive one", () => {
+      expect(resolveName("Read", ["Read", "read"])).toBe("Read")
+      expect(resolveName("read", ["Read", "read"])).toBe("read")
+    })
+
+    test("prefers a case-insensitive match over an earlier canonical one", () => {
+      expect(resolveName("apply_patch", ["applyPatch", "Apply_Patch"])).toBe("Apply_Patch")
+    })
+
+    describe("with MIMOCODE_IGNORE_TOOL_NAME_CASE=false", () => {
+      const previous = process.env["MIMOCODE_IGNORE_TOOL_NAME_CASE"]
+
+      beforeEach(() => {
+        process.env["MIMOCODE_IGNORE_TOOL_NAME_CASE"] = "false"
+      })
+
+      afterEach(() => {
+        if (previous === undefined) delete process.env["MIMOCODE_IGNORE_TOOL_NAME_CASE"]
+        else process.env["MIMOCODE_IGNORE_TOOL_NAME_CASE"] = previous
+      })
+
+      test("still returns exact matches", () => {
+        expect(resolveName("read", tools)).toBe("read")
+        expect(resolveName("apply_patch", tools)).toBe("apply_patch")
+      })
+
+      test("rejects names that only differ by case", () => {
+        expect(resolveName("Read", tools)).toBeUndefined()
+        expect(resolveName("ApplyPatch", tools)).toBeUndefined()
+        expect(resolveName("MultiEdit", tools)).toBeUndefined()
+      })
+
+      test("still repairs separator-only differences", () => {
+        expect(resolveName("apply-patch", tools)).toBe("apply_patch")
+        expect(resolveName("multi edit", tools)).toBe("multi_edit")
+      })
+
+      test("keeps MCP names case-insensitive", () => {
+        const mcpTools = ["feishu-mcp-pro_doc_read"] as const
+
+        expect(resolveName("mcp__feishu-mcp-pro__doc_read", mcpTools)).toBe("feishu-mcp-pro_doc_read")
+        expect(resolveName("mcp__feishu-mcp-pro__Doc_Read", mcpTools)).toBe("feishu-mcp-pro_doc_read")
+        expect(resolveName("mcp__Feishu_MCP_Pro__doc_read", mcpTools)).toBe("feishu-mcp-pro_doc_read")
+      })
+
+      test("keeps MCP-prefixed candidates case-insensitive", () => {
+        const mcpTools = ["mcp__feishu-mcp-pro__doc_read"] as const
+
+        expect(resolveName("feishu_mcp_pro_Doc_Read", mcpTools)).toBe("mcp__feishu-mcp-pro__doc_read")
+      })
     })
   })
 
