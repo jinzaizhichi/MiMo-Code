@@ -434,6 +434,27 @@ describe("tool.read truncation", () => {
     }),
   )
 
+  it.live("attaches BMP files by sniffed MIME so transform can transcode them", () =>
+    Effect.gen(function* () {
+      const dir = yield* tmpdirScoped()
+      const rowSize = Math.floor((24 * 1 + 31) / 32) * 4
+      const bmp = Buffer.alloc(54 + rowSize)
+      bmp.write("BM", 0, "ascii")
+      bmp.writeUInt32LE(bmp.length, 2)
+      bmp.writeUInt32LE(54, 10)
+      bmp.writeUInt32LE(40, 14)
+      bmp.writeInt32LE(1, 18)
+      bmp.writeInt32LE(1, 22)
+      bmp.writeUInt16LE(1, 26)
+      bmp.writeUInt16LE(24, 28)
+      yield* put(path.join(dir, "screenshot.png"), bmp)
+
+      const result = yield* exec(dir, { file_path: path.join(dir, "screenshot.png") })
+      expect(result.output).toBe("Image read successfully")
+      expect(result.attachments?.[0].mime).toBe("image/bmp")
+    }),
+  )
+
   it.live("large image files are properly attached without error", () =>
     Effect.gen(function* () {
       const result = yield* exec(FIXTURES_DIR, { file_path: path.join(FIXTURES_DIR, "large-image.png") })
