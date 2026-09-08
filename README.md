@@ -14,15 +14,15 @@
   <a href="https://mimo.xiaomi.com/coder">Website</a> | <a href="https://mimo.xiaomi.com/en/blog/mimo-code-long-horizon">Blog</a>
 </p>
 
-<p align="center"><strong>MiMo Desktop Beta Invitation</strong>: <a href="https://mimo-ai.xiaomimimo.com/desktop/invite/">Apply for the international beta</a></p>
-
 ---
 
 MiMoCode is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while continuously improving itself.
 
+<p align="center"><strong>MiMo Desktop Beta Invitation</strong>: <a href="https://mimo-ai.xiaomimimo.com/desktop/invite/">Apply for the international beta</a></p>
+
 ## Xiaomi MiMo Desktop Beta
 
-<p align="center"><img src="packages/desktop/icons/beta/icon.png" alt="Xiaomi MiMo Desktop" width="128"></p>
+<p align="center"><img src="assets/readme/mimo-desktop-en.jpg" alt="Xiaomi MiMo Desktop English interface: starting a new task" width="900"></p>
 
 Xiaomi MiMo Desktop is built for real-world work: one conversation can handle office work, design, coding, and multimodal creation, while multiple conversations can divide work and collaborate. The desktop app is powered by **MiMo Code as its core engine**, bringing its terminal-native intelligence to desktop workflows.
 

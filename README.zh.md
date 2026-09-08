@@ -14,15 +14,15 @@
   <a href="https://mimo.xiaomi.com/zh/mimocode">官网</a> | <a href="https://mimo.xiaomi.com/zh/blog/mimo-code-long-horizon">博客</a>
 </p>
 
-<p align="center"><strong>MiMo 桌面端内测邀请</strong>：<a href="https://mimo.xiaomimimo.com/desktop/invite/">立即申请国内邀测</a></p>
+MiMoCode 是一个终端原生的 AI 编程助手。它能读写代码、执行命令、管理 Git，通过持久化记忆系统，在多次会话间保持对你项目的深度理解，并自我进化。
 
 ---
 
-MiMoCode 是一个终端原生的 AI 编程助手。它能读写代码、执行命令、管理 Git，通过持久化记忆系统，在多次会话间保持对你项目的深度理解，并自我进化。
+<p align="center"><strong>MiMo 桌面端内测邀请</strong>：<a href="https://mimo.xiaomimimo.com/desktop/invite/">立即申请国内邀测</a></p>
 
 ## Xiaomi MiMo Desktop 开放邀测
 
-<p align="center"><img src="packages/desktop/icons/beta/icon.png" alt="Xiaomi MiMo Desktop" width="128"></p>
+<p align="center"><img src="assets/readme/mimo-desktop-cn.jpg" alt="Xiaomi MiMo Desktop 中文界面：会话与研究报告预览" width="900"></p>
 
 Xiaomi MiMo Desktop 面向真实工作场景打造，一个会话即可完成办公、设计、编程和全模态创作；多个会话可自动分工、协作与通信。桌面端以 **MiMo Code 作为核心引擎**，将终端原生的智能能力延伸到桌面工作流。
 
