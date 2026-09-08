@@ -1452,10 +1452,16 @@ const layer: Layer.Layer<
           if (!stored) continue
           if (!plugin.auth.loader) continue
 
+          const catalog = database[plugin.auth.provider]
+          if (!catalog) {
+            log.warn("skipping plugin auth loader; provider missing from model catalog", { providerID })
+            continue
+          }
+
           const options = yield* Effect.promise(() =>
             plugin.auth!.loader!(
               () => bridge.promise(auth.get(providerID).pipe(Effect.orDie)) as any,
-              database[plugin.auth!.provider],
+              catalog,
             ),
           )
           const opts = options ?? {}
