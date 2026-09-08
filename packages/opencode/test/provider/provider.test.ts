@@ -8,6 +8,7 @@ import { Plugin } from "../../src/plugin/index"
 import { ModelsDev } from "../../src/provider"
 import { Provider } from "../../src/provider"
 import { ProviderID, ModelID } from "../../src/provider/schema"
+import { Auth } from "../../src/auth"
 import { Env } from "../../src/env"
 import { Global } from "../../src/global"
 import { Effect } from "effect"
@@ -3315,6 +3316,57 @@ test("plugin config providers persist after instance dispose", async () => {
   })
   expect(second[ProviderID.make("demo")]).toBeDefined()
   expect(second[ProviderID.make("demo")].models[ModelID.make("chat")]).toBeDefined()
+})
+
+test("plugin auth loader is skipped when provider is missing from catalog", async () => {
+  await using tmp = await tmpdir({
+    init: async (dir) => {
+      const root = path.join(dir, ".mimocode", "plugin")
+      await mkdir(root, { recursive: true })
+      await Bun.write(
+        path.join(root, "missing-catalog.ts"),
+        [
+          "export default {",
+          '  id: "demo.missing-catalog",',
+          "  server: async () => ({",
+          "    auth: {",
+          '      provider: "test-missing-provider",',
+          "      async loader() {",
+          '        throw new Error("plugin auth loader should not run when provider is missing from catalog")',
+          "      },",
+          "      methods: [],",
+          "    },",
+          "  }),",
+          "}",
+          "",
+        ].join("\n"),
+      )
+    },
+  })
+
+  Auth.inject(
+    JSON.stringify({
+      "test-missing-provider": {
+        type: "api",
+        key: "test-key",
+      },
+    }),
+  )
+  try {
+    await Instance.provide({
+      directory: tmp.path,
+      init: async () => {
+        set("ANTHROPIC_API_KEY", "test-api-key")
+      },
+      fn: async () => {
+        const providers = await list()
+        expect(providers[ProviderID.anthropic]).toBeDefined()
+        expect(providers[ProviderID.make("test-missing-provider")]).toBeUndefined()
+      },
+    })
+  } finally {
+    Auth.inject(undefined)
+  }
 })
 
 test("plugin config enabled and disabled providers are honored", async () => {
