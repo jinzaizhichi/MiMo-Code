@@ -801,10 +801,11 @@ export type EventSessionIdle = {
   }
 }
 
-export type EventVcsBranchUpdated = {
-  type: "vcs.branch.updated"
+export type EventSessionCompacted = {
+  type: "session.compacted"
   properties: {
-    branch?: string
+    sessionID: string
+    agentID?: string
   }
 }
 
@@ -830,6 +831,31 @@ export type EventCommandExecuted = {
     sessionID: string
     arguments: string
     messageID: string
+  }
+}
+
+export type EventSessionGoal = {
+  type: "session.goal"
+  properties: {
+    sessionID: string
+    goal?: {
+      condition: string
+    }
+    lastVerdict?: {
+      ok: boolean
+      impossible?: boolean
+      reason: string
+      attempt: number
+      messageID?: string
+      error?: boolean
+    }
+  }
+}
+
+export type EventVcsBranchUpdated = {
+  type: "vcs.branch.updated"
+  properties: {
+    branch?: string
   }
 }
 
@@ -864,32 +890,6 @@ export type EventTodoUpdated = {
   properties: {
     sessionID: string
     todos: Array<Todo>
-  }
-}
-
-export type EventSessionGoal = {
-  type: "session.goal"
-  properties: {
-    sessionID: string
-    goal?: {
-      condition: string
-    }
-    lastVerdict?: {
-      ok: boolean
-      impossible?: boolean
-      reason: string
-      attempt: number
-      messageID?: string
-      error?: boolean
-    }
-  }
-}
-
-export type EventSessionCompacted = {
-  type: "session.compacted"
-  properties: {
-    sessionID: string
-    agentID?: string
   }
 }
 
@@ -1421,6 +1421,8 @@ export type Session = {
     url: string
   }
   title: string
+  titleSource: "fallback" | "generated" | "user"
+  titleRevision: number
   version: string
   time: {
     created: number
@@ -1442,16 +1444,16 @@ export type Session = {
   }
 }
 
-export type EventSessionCreated = {
-  type: "session.created"
+export type EventSessionUpdated = {
+  type: "session.updated"
   properties: {
     sessionID: string
     info: Session
   }
 }
 
-export type EventSessionUpdated = {
-  type: "session.updated"
+export type EventSessionCreated = {
+  type: "session.created"
   properties: {
     sessionID: string
     info: Session
@@ -1516,26 +1518,15 @@ export type SyncEventMessagePartRemoved = {
   }
 }
 
-export type SyncEventSessionCreated = {
-  type: "sync"
-  name: "session.created.1"
-  id: string
-  seq: number
-  aggregateID: "sessionID"
-  data: {
-    sessionID: string
-    info: Session
-  }
-}
-
 export type SyncEventSessionUpdated = {
   type: "sync"
-  name: "session.updated.1"
+  name: "session.updated.2"
   id: string
   seq: number
   aggregateID: "sessionID"
   data: {
     sessionID: string
+    previousRevision?: number
     info: {
       id: string | null
       slug: string | null
@@ -1555,6 +1546,8 @@ export type SyncEventSessionUpdated = {
         url: string | null
       }
       title: string | null
+      titleSource: "fallback" | "generated" | "user" | null
+      titleRevision: number | null
       version: string | null
       time?: {
         created: number | null
@@ -1575,6 +1568,18 @@ export type SyncEventSessionUpdated = {
         diff?: string
       } | null
     }
+  }
+}
+
+export type SyncEventSessionCreated = {
+  type: "sync"
+  name: "session.created.1"
+  id: string
+  seq: number
+  aggregateID: "sessionID"
+  data: {
+    sessionID: string
+    info: Session
   }
 }
 
@@ -1648,15 +1653,15 @@ export type GlobalEvent = {
     | EventBashInteractiveReplied
     | EventSessionStatus
     | EventSessionIdle
-    | EventVcsBranchUpdated
+    | EventSessionCompacted
     | EventMcpToolsChanged
     | EventMcpBrowserOpenFailed
     | EventCommandExecuted
+    | EventSessionGoal
+    | EventVcsBranchUpdated
     | EventWorktreeReady
     | EventWorktreeFailed
     | EventTodoUpdated
-    | EventSessionGoal
-    | EventSessionCompacted
     | EventPtyCreated
     | EventPtyUpdated
     | EventPtyExited
@@ -1669,15 +1674,15 @@ export type GlobalEvent = {
     | EventMessageRemoved
     | EventMessagePartUpdated
     | EventMessagePartRemoved
-    | EventSessionCreated
     | EventSessionUpdated
+    | EventSessionCreated
     | EventSessionDeleted
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
     | SyncEventMessagePartRemoved
-    | SyncEventSessionCreated
     | SyncEventSessionUpdated
+    | SyncEventSessionCreated
     | SyncEventSessionDeleted
 }
 
@@ -3050,6 +3055,8 @@ export type GlobalSession = {
     url: string
   }
   title: string
+  titleSource: "fallback" | "generated" | "user"
+  titleRevision: number
   version: string
   time: {
     created: number
@@ -3078,6 +3085,13 @@ export type McpResource = {
   description?: string
   mimeType?: string
   client: string
+}
+
+export type TitleSnapshot = {
+  sessionID: string
+  title: string
+  titleSource: "fallback" | "generated" | "user"
+  titleRevision: number
 }
 
 export type ConflictError = {
@@ -3274,15 +3288,15 @@ export type Event =
   | EventBashInteractiveReplied
   | EventSessionStatus
   | EventSessionIdle
-  | EventVcsBranchUpdated
+  | EventSessionCompacted
   | EventMcpToolsChanged
   | EventMcpBrowserOpenFailed
   | EventCommandExecuted
+  | EventSessionGoal
+  | EventVcsBranchUpdated
   | EventWorktreeReady
   | EventWorktreeFailed
   | EventTodoUpdated
-  | EventSessionGoal
-  | EventSessionCompacted
   | EventPtyCreated
   | EventPtyUpdated
   | EventPtyExited
@@ -3295,8 +3309,8 @@ export type Event =
   | EventMessageRemoved
   | EventMessagePartUpdated
   | EventMessagePartRemoved
-  | EventSessionCreated
   | EventSessionUpdated
+  | EventSessionCreated
   | EventSessionDeleted
 
 export type McpStatusConnected = {
@@ -4530,6 +4544,10 @@ export type ExperimentalTitleGenerateData = {
         }
     >
     locale?: string
+    model?: {
+      providerID: string
+      modelID: string
+    }
   }
   path?: never
   query?: {
@@ -4803,6 +4821,7 @@ export type SessionGetResponse = SessionGetResponses[keyof SessionGetResponses]
 export type SessionUpdateData = {
   body?: {
     title?: string
+    expectedRevision?: number
     permission?: PermissionRuleset
     time?: {
       archived?: number
@@ -4827,6 +4846,15 @@ export type SessionUpdateErrors = {
    * Not found
    */
   404: NotFoundError
+  /**
+   * Title changed by another writer
+   */
+  409: {
+    name: "TitleConflictError"
+    data: {
+      current: TitleSnapshot
+    }
+  }
 }
 
 export type SessionUpdateError = SessionUpdateErrors[keyof SessionUpdateErrors]
@@ -4998,6 +5026,7 @@ export type SessionInitResponse = SessionInitResponses[keyof SessionInitResponse
 export type SessionForkData = {
   body?: {
     messageID?: string
+    title?: string
   }
   path: {
     sessionID: string
@@ -5677,14 +5706,30 @@ export type SessionCommandData = {
      * Harness mode selected by the session's first user command. Later values are ignored. Auto preserves model/process inference and explicit default forces the native tool schema for non-GPT models. MIMOCODE_CODEX_MODE=false forces the default harness for every model, including GPT.
      */
     harness?: "auto" | "codex" | "default"
-    parts?: Array<{
-      id?: string
-      type: "file"
-      mime: string
-      filename?: string
-      url: string
-      source?: FilePartSource
-    }>
+    parts?: Array<
+      | {
+          id?: string
+          type: "text"
+          text: string
+          synthetic?: boolean
+          ignored?: boolean
+          time?: {
+            start: number
+            end?: number
+          }
+          metadata?: {
+            [key: string]: unknown
+          }
+        }
+      | {
+          id?: string
+          type: "file"
+          mime: string
+          filename?: string
+          url: string
+          source?: FilePartSource
+        }
+    >
   }
   path: {
     sessionID: string
